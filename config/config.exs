@@ -1,25 +1,17 @@
 # This file is responsible for configuring your application
 # and its dependencies with the aid of the Mix.Config module.
-#
-# This configuration file is loaded before any dependency and
-# is restricted to this project.
 use Mix.Config
 
-# Import target specific config. This must remain at the bottom
-# of this file so it overrides the configuration defined above.
-# Uncomment to use target specific configurations
+# By default, the umbrella project as well as each child
+# application will require this configuration file, ensuring
+# they all use the same configuration. While one could
+# configure all applications here, we prefer to delegate
+# back to each application for organization purposes.
+import_config "../apps/*/config/config.exs"
 
-# import_config "#{Mix.Project.config[:target]}.exs"
-
-config :nerves, :firmware,
-  rootfs_additions: "rootfs-additions"
-
-config :mini_router, :wlan0,
-  ssid: System.get_env("MINI_ROUTER_WLAN_SSID"),
-  psk: System.get_env("MINI_ROUTER_WLAN_PSK"),
-  key_mgmt: :"WPA-PSK"
-
-config :mini_router, :networking,
-  hostname: System.get_env("MINI_ROUTER_HOSTNAME") |> String.to_atom,
-  cookie: System.get_env("MINI_ROUTER_COOKIE") |> String.to_atom,
-  master: System.get_env("MINI_ROUTER_MASTER") |> String.to_atom
+# Sample configuration (overrides the imported configuration above):
+#
+#     config :logger, :console,
+#       level: :info,
+#       format: "$date $time [$level] $metadata$message\n",
+#       metadata: [:user_id]

@@ -1,4 +1,4 @@
-defmodule MiniRouter do
+defmodule MiniRouterFw do
   use Application
 
   @interface :wlan0
@@ -11,10 +11,10 @@ defmodule MiniRouter do
       worker(Task, [&start_empd/0], restart: :transient, id: Nerves.Init.Empd),
       worker(Task, [&init_kernel_modules/0], restart: :transient, id: Nerves.Init.KernelModules),
       worker(Task, [&init_network/0], restart: :transient, id: Nerves.Init.Network),
-      worker(MiniRouter.SetupHostname, [])
+      worker(MiniRouterFw.SetupHostname, [])
     ]
 
-    opts = [strategy: :one_for_one, name: MiniRouter.Supervisor]
+    opts = [strategy: :one_for_one, name: MiniRouterFw.Supervisor]
     Supervisor.start_link(children, opts)
   end
 
@@ -27,7 +27,7 @@ defmodule MiniRouter do
   end
 
   defp init_network do
-    opts = Application.get_env(:mini_router, @interface)
+    opts = Application.get_env(:mini_router_fw, @interface)
     Nerves.InterimWiFi.setup(@interface, opts)
   end
 end

@@ -1,4 +1,4 @@
-defmodule MiniRouter.SetupHostname do
+defmodule MiniRouterFw.SetupHostname do
   use GenServer
   require Logger
 
@@ -43,7 +43,7 @@ defmodule MiniRouter.SetupHostname do
   end
 
   defp get_settings do
-    Application.get_env(:mini_router, :networking)
+    Application.get_env(:mini_router_fw, :networking)
   end
 
   defp get_name do

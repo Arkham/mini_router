@@ -5,8 +5,8 @@
 /*.ez
 
 # Nerves artifacts
-/_images
-/.nerves
+apps/*/_images
+apps/*/.nerves
 
 # Generate on crash by the VM
 erl_crash.dump

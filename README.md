@@ -1,14 +1,11 @@
 # MiniRouter
 
-To start your Nerves app:
+A small scale replica of an Internet router, written in Elixir and deployable to
+a Raspberry Pi 3.
 
-  * Install dependencies with `mix deps.get`
-  * Create firmware with `mix firmware`
-  * Burn to an SD card with `mix firmware.burn`
+## Installation
 
-## Learn more
-
-  * Official docs: https://hexdocs.pm/nerves/getting-started.html
-  * Official website: http://www.nerves-project.org/
-  * Discussion Slack elixir-lang #nerves ([Invite](https://elixir-slackin.herokuapp.com/))
-  * Source: https://github.com/nerves-project/nerves
+1. `cp .envrc.example .envrc` and set the correct environment variables.
+2. `cd apps/mini_router_fw`
+3. `mix deps.get && mix firmware`
+4. Insert your SD card and run `mix firmware.burn`
