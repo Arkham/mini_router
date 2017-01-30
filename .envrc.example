@@ -1,0 +1,5 @@
+export MINI_ROUTER_WLAN_SSID="ssid"
+export MINI_ROUTER_WLAN_PSK="password"
+export MINI_ROUTER_HOSTNAME="sweden"
+export MINI_ROUTER_MASTER="master"
+export MINI_ROUTER_COOKIE="foobar"

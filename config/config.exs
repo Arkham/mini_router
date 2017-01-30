@@ -13,3 +13,13 @@ use Mix.Config
 
 config :nerves, :firmware,
   rootfs_additions: "rootfs-additions"
+
+config :mini_router, :wlan0,
+  ssid: System.get_env("MINI_ROUTER_WLAN_SSID"),
+  psk: System.get_env("MINI_ROUTER_WLAN_PSK"),
+  key_mgmt: :"WPA-PSK"
+
+config :mini_router, :networking,
+  hostname: System.get_env("MINI_ROUTER_HOSTNAME") |> String.to_atom,
+  cookie: System.get_env("MINI_ROUTER_COOKIE") |> String.to_atom,
+  master: System.get_env("MINI_ROUTER_MASTER") |> String.to_atom
