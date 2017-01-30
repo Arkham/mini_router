@@ -47,14 +47,17 @@ defmodule MiniRouterFw.SetupHostname do
   end
 
   defp get_name do
-    get_settings()[:hostname]
+    get_settings()
+    |> Keyword.fetch!(:hostname)
   end
 
   defp get_cookie do
-    get_settings()[:cookie]
+    get_settings()
+    |> Keyword.fetch!(:cookie)
   end
 
   defp get_master do
-    get_settings()[:master]
+    get_settings()
+    |> Keyword.fetch!(:master)
   end
 end
