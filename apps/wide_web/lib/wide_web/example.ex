@@ -64,6 +64,8 @@ defmodule WideWeb.Example do
     send(node, {:status, self()})
     receive do
       {:status, status} -> status
+    after
+      5000 -> IO.puts "No status received"
     end
   end
 
@@ -78,8 +80,8 @@ defmodule WideWeb.Example do
 
     receive do
       :done -> :ok
-    after 5000 ->
-        IO.puts "start_country failed"
+    after
+      5000 -> IO.puts "start_country failed"
     end
   end
 
