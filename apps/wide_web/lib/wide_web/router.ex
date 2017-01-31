@@ -56,7 +56,7 @@ defmodule WideWeb.Router do
       {:DOWN, ref, :process, _, _} ->
         case InterfaceSet.name(interfaces, ref) do
           {:ok, down} ->
-            log(name, "exit received from #{down}")
+            log(name, %{type: :node_down, node: down})
             new_interfaces = InterfaceSet.remove(interfaces, down)
             send(self(), :update)
             router(%State{state | interfaces: new_interfaces})
@@ -71,9 +71,7 @@ defmodule WideWeb.Router do
       {:links, node, version, links} ->
         case History.check(history, node, version) do
           {:new, new_history} ->
-            if version < 4 do
-              log(name, "received new links (v#{version}) from node #{node}")
-            end
+            log(name, %{type: :links, version: version, source: node})
             InterfaceSet.broadcast(interfaces, {:links, node, version, links})
             new_map = Map.update(map, node, links)
             send(self(), :update)
@@ -88,29 +86,30 @@ defmodule WideWeb.Router do
          router(%State{state | table: new_table})
 
       :broadcast ->
-        InterfaceSet.broadcast(interfaces,
-                               {:links, name, n+1, InterfaceSet.list(interfaces)})
+        InterfaceSet.broadcast(interfaces, {:links, name, n+1, InterfaceSet.list(interfaces)})
         Process.send_after(self(), :broadcast, @broadcast_interval)
         router(%State{state | n: n+1})
 
-      {:route, ^name, _from, message} ->
-        log(name, "received message #{inspect(message)}")
+      {:route, ^name, from, message} ->
+        log(name, %{type: :received, from: from, message: message})
         router(state)
 
       {:route, to, from, message} ->
-        log(name, "routing message #{inspect(message)}")
         case Dijkstra.route(table, to) do
           {:ok, gateway} ->
-            log(name, "using gateway #{gateway}")
             case InterfaceSet.lookup(interfaces, gateway) do
               {:ok, pid} ->
+                log(name, %{type: :routing, message: message, from: from, to: to, gateway: gateway})
                 send(pid, {:route, to, from, message})
               :not_found ->
+                log(name, %{type: :error, reason: :no_interface, message: message,
+                            from: from, to: to, gateway: gateway})
                 :ok
             end
 
           :not_found ->
-            log(name, "gateway not found, aborting")
+            log(name, %{type: :error, reason: :no_gateway, message: message,
+                        from: from, to: to})
             :ok
         end
         router(state)

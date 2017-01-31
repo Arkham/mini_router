@@ -78,6 +78,8 @@ defmodule WideWeb.Example do
 
     receive do
       :done -> :ok
+    after 5000 ->
+        IO.puts "start_country failed"
     end
   end
 
