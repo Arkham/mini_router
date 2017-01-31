@@ -11,7 +11,7 @@ defmodule MiniRouterFw do
       worker(Task, [&start_empd/0], restart: :transient, id: Nerves.Init.Empd),
       worker(Task, [&init_kernel_modules/0], restart: :transient, id: Nerves.Init.KernelModules),
       worker(Task, [&init_network/0], restart: :transient, id: Nerves.Init.Network),
-      worker(MiniRouterFw.SetupHostname, [])
+      worker(MiniRouterFw.SetupNode, [])
     ]
 
     opts = [strategy: :one_for_one, name: MiniRouterFw.Supervisor]

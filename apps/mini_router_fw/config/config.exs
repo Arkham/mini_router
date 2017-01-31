@@ -19,7 +19,7 @@ config :mini_router_fw, :wlan0,
   psk: System.get_env("MINI_ROUTER_WLAN_PSK"),
   key_mgmt: :"WPA-PSK"
 
-config :mini_router_fw, :networking,
+config :mini_router_fw, :node,
   hostname: System.get_env("MINI_ROUTER_HOSTNAME") |> String.to_atom,
   cookie: System.get_env("MINI_ROUTER_COOKIE") |> String.to_atom,
   master: System.get_env("MINI_ROUTER_MASTER") |> String.to_atom

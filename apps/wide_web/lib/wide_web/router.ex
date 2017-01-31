@@ -1,7 +1,7 @@
 defmodule WideWeb.Router do
   alias WideWeb.{InterfaceSet, Map, Dijkstra, History}
 
-  @broadcast_interval 10_000
+  @broadcast_interval 5_000
 
   defmodule State do
     defstruct name: nil, n: nil, history: nil, interfaces: nil,
@@ -23,7 +23,7 @@ defmodule WideWeb.Router do
     table = Dijkstra.table([name], map)
     history = History.new(name)
 
-    send(self(), :broadcast)
+    Process.send_after(self(), :broadcast, @broadcast_interval)
 
     router(%State{name: name,
                   n: 0,
@@ -71,7 +71,7 @@ defmodule WideWeb.Router do
       {:links, node, version, links} ->
         case History.check(history, node, version) do
           {:new, new_history} ->
-            if version < 5 do
+            if version < 4 do
               log(name, "received new links (v#{version}) from node #{node}")
             end
             InterfaceSet.broadcast(interfaces, {:links, node, version, links})
@@ -125,7 +125,13 @@ defmodule WideWeb.Router do
   end
 
   defp log(name, message) do
-    name = "[#{name}]" |> String.pad_trailing(15)
-    IO.puts("#{name} #{message}")
+    send(get_logger(), {:log, name, message})
+  end
+
+  defp get_logger do
+    master = Application.get_env(:wide_web, :node)
+             |> Keyword.fetch!(:master)
+
+    {:logger, master}
   end
 end

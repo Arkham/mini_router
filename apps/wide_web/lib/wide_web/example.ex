@@ -12,6 +12,8 @@ defmodule WideWeb.Example do
     connect(:stockholm, :goteborg, sweden)
     connect(:stockholm, :malmo, sweden)
     connect(:malmo, :lund, sweden)
+
+    :ok
   end
 
   def build_italy do
@@ -24,21 +26,38 @@ defmodule WideWeb.Example do
 
     connect(:rome, :milan, italy)
     connect(:milan, :turin, italy)
+
+    :ok
   end
 
   def connect(first, second, country), do: connect({first, country}, {second, country})
   def connect({first_name, _} = first, {second_name, _} = second) do
     send(first, {:add, second_name, second})
     send(second, {:add, first_name, first})
+    IO.puts "Connected #{inspect first} to #{inspect second}"
   end
 
   def connect_sweden_and_italy  do
     connect({:stockholm, get_sweden()}, {:rome, get_italy()})
     connect({:goteborg, get_sweden()}, {:milan, get_italy()})
+
+    :ok
   end
 
-  def send_greeting do
-    send({:malmo, get_sweden()}, {:send, :turin, "Hej fran Sveridge"})
+  def send_greeting(n) do
+    send({:malmo, get_sweden()}, {:send, :turin, "Hej fran Sveridge #{n}"})
+  end
+
+  def build_topology do
+    build_italy()
+    build_sweden()
+    connect_sweden_and_italy()
+  end
+
+  def send_stuff(n \\ 100) do
+    (1..n)
+    |> Task.async_stream(&send_greeting/1)
+    |> Enum.to_list
   end
 
   def status(node) do
@@ -49,9 +68,17 @@ defmodule WideWeb.Example do
   end
 
   defp start_country(name, node) do
+    current = self()
+
     Node.spawn(node, fn ->
       Router.start(name)
+      IO.puts "Started #{name} router in #{node}"
+      send current, :done
     end)
+
+    receive do
+      :done -> :ok
+    end
   end
 
   defp get_sweden do

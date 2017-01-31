@@ -26,12 +26,13 @@ defmodule MiniRouterFw.Mixfile do
   # Type `mix help compile.app` for more information.
   def application do
     [mod: {MiniRouterFw, []},
-     applications: [:logger, :nerves_interim_wifi]]
+     applications: [:logger, :nerves_interim_wifi, :wide_web]]
   end
 
   def deps do
     [{:nerves, "~> 0.4.0"},
-     {:nerves_interim_wifi, "~> 0.1.1"}]
+     {:nerves_interim_wifi, "~> 0.1.1"},
+     {:wide_web, in_umbrella: true}]
   end
 
   def system(target) do

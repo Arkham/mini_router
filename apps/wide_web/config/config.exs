@@ -28,3 +28,6 @@ use Mix.Config
 # here (which is why it is important to import them last).
 #
 #     import_config "#{Mix.env}.exs"
+
+config :wide_web, :node,
+  master: System.get_env("MINI_ROUTER_MASTER") |> String.to_atom

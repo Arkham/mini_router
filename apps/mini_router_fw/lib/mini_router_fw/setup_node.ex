@@ -1,4 +1,4 @@
-defmodule MiniRouterFw.SetupHostname do
+defmodule MiniRouterFw.SetupNode do
   use GenServer
   require Logger
 
@@ -17,18 +17,15 @@ defmodule MiniRouterFw.SetupHostname do
     case is_connected_to_wifi() do
       {:yes, ip} ->
         hostname = "#{get_name()}@#{ip}" |> String.to_atom
-        Logger.info("Network found, enabling distributed mode for #{hostname}")
-
-        Node.start(hostname)
-        Node.set_cookie(get_cookie())
-        Node.connect(get_master())
-
-        {:noreply, state}
+        set_hostname(hostname)
+        set_cookie()
+        connect_to_master()
       :no ->
         Logger.info("No network found, retrying...")
-        Process.send_after(self(), :check_for_network, @retry_interval)
-        {:noreply, state}
     end
+
+    Process.send_after(self(), :check_for_network, @retry_interval)
+    {:noreply, state}
   end
 
   defp is_connected_to_wifi do
@@ -42,8 +39,25 @@ defmodule MiniRouterFw.SetupHostname do
     end
   end
 
+  defp set_hostname(hostname) do
+    case node() do
+      :"nonode@nohost" ->
+        Logger.info("Network found, enabling distributed mode for #{hostname}")
+        Node.start(hostname)
+      _other -> :ok
+    end
+  end
+
+  defp set_cookie do
+    Node.set_cookie(get_cookie())
+  end
+
+  defp connect_to_master do
+    Node.connect(get_master())
+  end
+
   defp get_settings do
-    Application.get_env(:mini_router_fw, :networking)
+    Application.get_env(:mini_router_fw, :node)
   end
 
   defp get_name do
