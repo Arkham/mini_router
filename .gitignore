@@ -8,6 +8,9 @@
 apps/*/_images
 apps/*/.nerves
 
+# Phoenix assets
+apps/ui/priv/static/
+
 # Generate on crash by the VM
 erl_crash.dump
 
