@@ -1,31 +1,38 @@
 defmodule WideWeb.Example do
   alias WideWeb.Router
 
-  def build_sweden do
-    sweden = get_sweden()
+  def build_na do
+    na = get_region(:na)
 
-    ~w(stockholm goteborg malmo lund)a
+    ~w(atlanta chicago los_angeles dallas denver new_york)a
     |> Enum.each(fn atom ->
-      start_country(atom, sweden)
+      start_router(atom, na)
     end)
 
-    connect(:stockholm, :goteborg, sweden)
-    connect(:stockholm, :malmo, sweden)
-    connect(:malmo, :lund, sweden)
+    connect(:atlanta, :chicago, na)
+    connect(:los_angeles, :new_york, na)
+    connect(:chicago, :new_york, na)
+    connect(:denver, :dallas, na)
+    connect(:denver, :los_angeles, na)
 
     :ok
   end
 
-  def build_italy do
-    italy = get_italy()
+  def build_eu do
+    eu = get_region(:eu)
 
-    ~w(rome milan turin)a
+    ~w(london rome paris madrid amsterdam frankfurt)a
     |> Enum.each(fn atom ->
-      start_country(atom, italy)
+      start_router(atom, eu)
     end)
 
-    connect(:rome, :milan, italy)
-    connect(:milan, :turin, italy)
+    connect(:london, :madrid, eu)
+    connect(:london, :paris, eu)
+    connect(:london, :amsterdam, eu)
+    connect(:rome, :madrid, eu)
+    connect(:rome, :frankfurt, eu)
+    connect(:amsterdam, :frankfurt, eu)
+    connect(:frankfurt, :madrid, eu)
 
     :ok
   end
@@ -37,31 +44,18 @@ defmodule WideWeb.Example do
     IO.puts "Connected #{inspect first} to #{inspect second}"
   end
 
-  def connect_sweden_and_italy  do
-    connect({:stockholm, get_sweden()}, {:rome, get_italy()})
-    connect({:goteborg, get_sweden()}, {:milan, get_italy()})
+  def connect_eu_and_na  do
+    eu = get_region(:eu)
+    na = get_region(:na)
+
+    connect({:london, eu}, {:new_york, na})
+    connect({:madrid, eu}, {:los_angeles, na})
 
     :ok
   end
 
-  def send_greeting(n) do
-    send({:malmo, get_sweden()}, {:send, :turin, "Hej fran Sveridge #{n}"})
-  end
-
-  def build_topology do
-    build_italy()
-    build_sweden()
-    connect_sweden_and_italy()
-  end
-
-  def send_stuff(n \\ 100) do
-    (1..n)
-    |> Task.async_stream(&send_greeting/1)
-    |> Enum.to_list
-  end
-
-  def status(node) do
-    send(node, {:status, self()})
+  def status(name, region_name) do
+    send({name, get_region(region_name)}, {:status, self()})
     receive do
       {:status, status} -> status
     after
@@ -69,31 +63,54 @@ defmodule WideWeb.Example do
     end
   end
 
-  defp start_country(name, node) do
+  def build_topology do
+    build_eu()
+    build_na()
+    connect_eu_and_na()
+  end
+
+  def send_greeting(first \\ :frankfurt, second \\ :denver, message \\ "Greetings") do
+    Node.list
+    |> Enum.each(fn(node) ->
+      send({first, node}, {:send, second, message})
+    end)
+  end
+
+  def sync_mass_send(first \\ :frankfurt, second \\ :denver, n \\ 10) do
+    (1..n)
+    |> Enum.each(fn(index) ->
+      send_greeting(first, second, "Greetings from #{first} (#{index})")
+      Process.sleep(1000)
+    end)
+  end
+
+  def async_mass_send(first \\ :frankfurt, second \\ :denver, n \\ 10) do
+    (1..n)
+    |> Task.async_stream(fn(index) ->
+      send_greeting(first, second, "Greetings from #{first} (#{index})")
+    end)
+    |> Enum.to_list
+  end
+
+  defp start_router(name, region) do
     current = self()
 
-    Node.spawn(node, fn ->
+    Node.spawn(region, fn ->
       Router.start(name)
-      IO.puts "Started #{name} router in #{node}"
+      IO.puts "Started #{name} router in #{region}"
       send current, :done
     end)
 
     receive do
       :done -> :ok
     after
-      5000 -> IO.puts "start_country failed"
+      5000 -> IO.puts "Could not start country #{name} on region #{}"
     end
   end
 
-  defp get_sweden do
-    find_node_called("sweden")
-  end
+  defp get_region(name) do
+    name = to_string(name)
 
-  defp get_italy do
-    find_node_called("italy")
-  end
-
-  defp find_node_called(name) do
     Node.list
     |> Enum.map(&to_string/1)
     |> Enum.find(fn s -> String.starts_with?(s, name) end)

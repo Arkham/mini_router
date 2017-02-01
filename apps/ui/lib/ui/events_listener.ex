@@ -16,14 +16,12 @@ defmodule Ui.EventsListener do
   def loop(whitelist) do
     receive do
       {:log, name, %{type: :routing} = message} ->
+        print_message(name, message)
         Ui.Endpoint.broadcast!("room:lobby", "routing_event", Map.put(message, :current, name))
 
       {:log, name, %{type: type} = message} ->
         if type in whitelist do
-          name = "[#{name}]" |> String.pad_trailing(15)
-          type = "<#{type}>" |> String.pad_trailing(10)
-          message = Map.delete(message, :type)
-          IO.puts("#{name} #{type} #{inspect message}")
+          print_message(name, message)
         end
 
       {:set_whitelist, types} ->
@@ -34,5 +32,12 @@ defmodule Ui.EventsListener do
     end
 
     loop(whitelist)
+  end
+
+  defp print_message(name, %{type: type} = message) do
+    name = "[#{name}]" |> String.pad_trailing(15)
+    type = "<#{type}>" |> String.pad_trailing(10)
+    message = Map.delete(message, :type)
+    IO.puts("#{name} #{type} #{inspect message}")
   end
 end

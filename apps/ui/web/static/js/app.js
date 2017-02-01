@@ -2,52 +2,10 @@ import "phoenix_html"
 
 import socket from "./socket"
 import $ from "jquery"
-import airports from "./airports.topo"
+import cities from "./cities.topo"
 import countries from "./countries.topo"
 
 $(function() {
-  var AIRPORTS = [
-    "ATL",
-    "PEK",
-    "LHR",
-    "NRT",
-    "ORD",
-    "LAX",
-    "CDG",
-    "DFW",
-    "CGK",
-    "DXB",
-    "FRA",
-    "HKG",
-    "DEN",
-    "SIN",
-    "AMS",
-    "JFK",
-    "MAD",
-    "IST",
-    "PVG",
-    "SFO",
-    "LAS",
-    "MIA",
-    "FCO",
-    "MCO",
-    "SYD",
-    "YYZ",
-    "SEA",
-    "BOM",
-    "SVO",
-    "MEX",
-    "CUN",
-    "YYC",
-    "EZE",
-    "ARN",
-    "CPT",
-    "CAI",
-    "DEL",
-    "HNL",
-    "GRU"
-  ];
-
   var currentWidth = $('#map').width();
   var width = 938;
   var height = 620;
@@ -82,17 +40,40 @@ $(function() {
      .append("path")
      .attr("d", "M0,-5L10,0L0,5");
 
-  var airportMap = {};
+  // create countries
+  svg.append("g")
+     .attr("class", "countries")
+     .selectAll("path")
+     .data(topojson.feature(countries, countries.objects.countries).features)
+     .enter()
+     .append("path")
+     .attr("d", path);
+
+  // create cities
+  svg.append("g")
+     .attr("class", "cities")
+     .selectAll("path")
+     .data(topojson.feature(cities, cities.objects.cities).features)
+     .enter()
+     .append("path")
+     .attr("id", function(d) {return d.id;})
+     .attr("d", path);
+
+  var citiesMap = {};
+  var geos = topojson.feature(cities, cities.objects.cities).features;
+  for (let i in geos) {
+    citiesMap[geos[i].id] = geos[i].geometry.coordinates;
+  }
 
   function transition(route) {
     route.transition()
-      .duration(3000)
+      .duration(500)
       .remove()
   }
 
   function fly(origin, destination) {
     var route = svg.append("path")
-      .datum({type: "LineString", coordinates: [airportMap[origin], airportMap[destination]]})
+      .datum({type: "LineString", coordinates: [citiesMap[origin], citiesMap[destination]]})
       .attr("class", "route")
       .attr("d", path)
       .attr("marker-end", "url(#arrow)");
@@ -100,41 +81,7 @@ $(function() {
     transition(route);
   }
 
-  function hashCode (str){
-    var hash = 0;
-    if (str.length == 0) return hash;
-    for (let i = 0; i < str.length; i++) {
-      let char = str.charCodeAt(i);
-      hash = ((hash<<5)-hash)+char;
-      hash = hash & hash; // Convert to 32bit integer
-    }
-    return Math.abs(hash);
-  }
-
-  function loaded() {
-    svg.append("g")
-       .attr("class", "countries")
-       .selectAll("path")
-       .data(topojson.feature(countries, countries.objects.countries).features)
-       .enter()
-       .append("path")
-       .attr("d", path);
-
-    svg.append("g")
-       .attr("class", "airports")
-       .selectAll("path")
-       .data(topojson.feature(airports, airports.objects.airports).features)
-       .enter()
-       .append("path")
-       .attr("id", function(d) {return d.id;})
-       .attr("d", path);
-
-    var geos = topojson.feature(airports, airports.objects.airports).features;
-    for (let i in geos) {
-      airportMap[geos[i].id] = geos[i].geometry.coordinates;
-    }
-  }
-
+  // websocket setup
   let channel = socket.channel("room:lobby", {})
 
   channel.join()
@@ -145,14 +92,8 @@ $(function() {
     console.log(payload);
     let from = payload.current;
     let to = payload.gateway;
-
-    let from_index = hashCode(from) % AIRPORTS.length;
-    let to_index = hashCode(to) % AIRPORTS.length;
-
-    fly(AIRPORTS[from_index], AIRPORTS[to_index]);
+    fly(from, to);
   });
-
-  loaded();
 
   $(window).resize(function() {
     currentWidth = $("#map").width();
