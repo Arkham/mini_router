@@ -2,6 +2,7 @@ defmodule WideWeb.Router do
   alias WideWeb.{InterfaceSet, Map, Dijkstra, History}
 
   @broadcast_interval 5_000
+  @default_ttl 20
 
   defmodule State do
     defstruct name: nil, n: nil, history: nil, interfaces: nil,
@@ -90,17 +91,21 @@ defmodule WideWeb.Router do
         Process.send_after(self(), :broadcast, @broadcast_interval)
         router(%State{state | n: n+1})
 
-      {:route, ^name, from, message} ->
+      {:route, ^name, from, message, _ttl} ->
         log(name, %{type: :received, from: from, message: message})
         router(state)
 
-      {:route, to, from, message} ->
+      {:route, to, from, message, ttl} when ttl <= 0 ->
+        log(name, %{type: :error, reason: :ttl_expired, message: message, from: from, to: to})
+        router(state)
+
+      {:route, to, from, message, ttl} ->
         case Dijkstra.route(table, to) do
           {:ok, gateway} ->
             case InterfaceSet.lookup(interfaces, gateway) do
               {:ok, pid} ->
-                log(name, %{type: :routing, message: message, from: from, to: to, gateway: gateway})
-                send(pid, {:route, to, from, message})
+                log(name, %{type: :routing, message: message, from: from, to: to, gateway: gateway, ttl: ttl})
+                send(pid, {:route, to, from, message, ttl - 1})
               :not_found ->
                 log(name, %{type: :error, reason: :no_interface, message: message,
                             from: from, to: to, gateway: gateway})
@@ -115,7 +120,7 @@ defmodule WideWeb.Router do
         router(state)
 
       {:send, to, message} ->
-        send(self(), {:route, to, name, message})
+        send(self(), {:route, to, name, message, @default_ttl})
         router(state)
 
       :stop ->
