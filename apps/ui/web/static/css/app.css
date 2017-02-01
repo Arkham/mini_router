@@ -16,14 +16,17 @@
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
 }
+
 .route {
   fill: none;
   stroke: white;
   stroke-width: 2px;
 }
-.plane {
-  fill: #fff;
-  stroke-width: 0;
+
+#arrow{
+  stroke: white;
+  stroke-width: 1;
+  stroke-dasharray: 0;
 }
 
 #content {
