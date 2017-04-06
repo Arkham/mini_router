@@ -37,7 +37,31 @@ defmodule WideWeb.Example do
     :ok
   end
 
-  def connect(first, second, country), do: connect({first, country}, {second, country})
+  def build_asia do
+    asia = get_region(:asia)
+
+    ~w(peking tokyo jakarta dubai hong_kong singapore)a
+    |> Enum.each(fn atom ->
+      start_router(atom, asia)
+    end)
+
+    connect(:peking, :tokyo, asia)
+    connect(:peking, :jakarta, asia)
+    connect(:peking, :dubai, asia)
+    connect(:peking, :singapore, asia)
+    connect(:tokyo, :singapore, asia)
+    connect(:tokyo, :hong_kong, asia)
+    connect(:singapore, :jakarta, asia)
+    connect(:singapore, :dubai, asia)
+    connect(:singapore, :hong_kong, asia)
+
+    :ok
+  end
+
+
+  def connect(first, second, region) do
+    connect({first, region}, {second, region})
+  end
   def connect({first_name, _} = first, {second_name, _} = second) do
     send(first, {:add, second_name, second})
     send(second, {:add, first_name, first})
@@ -50,6 +74,17 @@ defmodule WideWeb.Example do
 
     connect({:london, eu}, {:new_york, na})
     connect({:madrid, eu}, {:los_angeles, na})
+
+
+    :ok
+  end
+
+  def connect_eu_and_asia do
+    eu = get_region(:eu)
+    asia = get_region(:asia)
+
+    connect({:london, eu}, {:singapore, asia})
+    connect({:rome, eu}, {:peking, asia})
 
     :ok
   end
@@ -92,6 +127,48 @@ defmodule WideWeb.Example do
     |> Enum.to_list
   end
 
+  def test_resilience do
+    eu = get_region(:eu)
+    na = get_region(:na)
+
+    spawn(fn ->
+      sync_mass_send(:frankfurt, :denver, 20)
+    end)
+
+    Process.sleep(5_000)
+
+    send({:madrid, eu}, :stop)
+
+    Process.sleep(5_000)
+
+    start_router(:madrid, eu)
+    connect({:madrid, eu}, {:los_angeles, na})
+    connect(:london, :madrid, eu)
+    connect(:rome, :madrid, eu)
+    connect(:frankfurt, :madrid, eu)
+  end
+
+  def test_global_resilience do
+    threads = [
+      {:frankfurt, :denver, 30},
+      {:rome, :los_angeles, 30},
+      {:jakarta, :new_york, 30},
+      {:singapore, :dallas, 30}
+    ]
+
+    Enum.each(threads, fn({src, dest, n}) ->
+      spawn(fn ->
+        sync_mass_send(src, dest, n)
+      end)
+    end)
+
+    Process.sleep(5_000)
+
+    Process.sleep(5_000)
+
+    send({:rome, get_region(:eu)}, :stop)
+  end
+
   defp start_router(name, region) do
     current = self()
 
@@ -108,7 +185,7 @@ defmodule WideWeb.Example do
     end
   end
 
-  defp get_region(name) do
+  def get_region(name) do
     name = to_string(name)
 
     Node.list

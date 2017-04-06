@@ -41,6 +41,7 @@ defmodule WideWeb.Router do
                     table: table,
                     map: map} = state) do
     receive do
+      # Interface management
       {:add, node, pid} ->
         ref = Process.monitor(pid)
         new_interfaces = InterfaceSet.add(interfaces, node, ref, pid)
@@ -65,10 +66,7 @@ defmodule WideWeb.Router do
             router(state)
         end
 
-      {:status, from} ->
-        send(from, {:status, state})
-        router(state)
-
+      # Incoming link-state message
       {:links, node, version, links} ->
         case History.check(history, node, version) do
           {:new, new_history} ->
@@ -82,15 +80,18 @@ defmodule WideWeb.Router do
             router(state)
         end
 
+      # Update routing table
       :update ->
          new_table = Dijkstra.table([name|InterfaceSet.list(interfaces)], map)
          router(%State{state | table: new_table})
 
+      # Broadcast new version of link-state message
       :broadcast ->
         InterfaceSet.broadcast(interfaces, {:links, name, n+1, InterfaceSet.list(interfaces)})
         Process.send_after(self(), :broadcast, @broadcast_interval)
         router(%State{state | n: n+1})
 
+      # Route a message
       {:route, ^name, from, message, _ttl} ->
         log(name, %{type: :received, from: from, message: message})
         router(state)
@@ -121,6 +122,11 @@ defmodule WideWeb.Router do
 
       {:send, to, message} ->
         send(self(), {:route, to, name, message, @default_ttl})
+        router(state)
+
+      # Debug
+      {:status, from} ->
+        send(from, {:status, state})
         router(state)
 
       :stop ->

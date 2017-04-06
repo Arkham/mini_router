@@ -4,11 +4,11 @@ defmodule WideWeb.InterfaceSet do
   def new, do: %__MODULE__{}
 
   def add(%__MODULE__{data: data} = set, name, ref, pid) do
-    %__MODULE__{set | data: Map.put(data, name, {ref, pid})}
+    %{set | data: Map.put(data, name, {ref, pid})}
   end
 
   def remove(%__MODULE__{data: data} = set, name) do
-    %__MODULE__{set | data: Map.delete(data, name)}
+    %{set | data: Map.delete(data, name)}
   end
 
   def lookup(%__MODULE__{data: data}, name) do

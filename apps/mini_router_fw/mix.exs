@@ -7,7 +7,7 @@ defmodule MiniRouterFw.Mixfile do
     [app: :mini_router_fw,
      version: "0.1.0",
      target: @target,
-     archives: [nerves_bootstrap: "~> 0.2.1"],
+     archives: [nerves_bootstrap: "~> 0.3"],
 
      deps_path: "../../deps/#{@target}",
      build_path: "../../_build/#{@target}",
