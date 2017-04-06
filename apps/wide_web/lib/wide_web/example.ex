@@ -132,7 +132,7 @@ defmodule WideWeb.Example do
     na = get_region(:na)
 
     spawn(fn ->
-      sync_mass_send(:frankfurt, :denver, 20)
+      sync_mass_send(:frankfurt, :denver, 15)
     end)
 
     Process.sleep(5_000)
@@ -149,14 +149,20 @@ defmodule WideWeb.Example do
   end
 
   def test_global_resilience do
+    eu = get_region(:eu)
+    na = get_region(:na)
+
     threads = [
-      {:frankfurt, :denver, 30},
-      {:rome, :los_angeles, 30},
-      {:jakarta, :new_york, 30},
-      {:singapore, :dallas, 30}
+      {:frankfurt, :denver, 20},
+      {:rome, :los_angeles, 20},
+      {:jakarta, :new_york, 20},
+      {:singapore, :dallas, 20}
     ]
 
-    Enum.each(threads, fn({src, dest, n}) ->
+    threads
+    |> Enum.with_index
+    |> Enum.each(fn({{src, dest, n}, sleep}) ->
+      Process.sleep(sleep * 100)
       spawn(fn ->
         sync_mass_send(src, dest, n)
       end)
@@ -164,9 +170,15 @@ defmodule WideWeb.Example do
 
     Process.sleep(5_000)
 
+    send({:madrid, eu}, :stop)
+
     Process.sleep(5_000)
 
-    send({:rome, get_region(:eu)}, :stop)
+    start_router(:madrid, eu)
+    connect({:madrid, eu}, {:los_angeles, na})
+    connect(:london, :madrid, eu)
+    connect(:rome, :madrid, eu)
+    connect(:frankfurt, :madrid, eu)
   end
 
   defp start_router(name, region) do
