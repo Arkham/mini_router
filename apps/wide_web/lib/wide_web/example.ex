@@ -156,7 +156,9 @@ defmodule WideWeb.Example do
       {:frankfurt, :denver, 20},
       {:rome, :los_angeles, 20},
       {:jakarta, :new_york, 20},
-      {:singapore, :dallas, 20}
+      {:singapore, :dallas, 20},
+      {:peking, :chicago, 20},
+      {:atlanta, :dubai, 20}
     ]
 
     threads
