@@ -1,7 +1,7 @@
 defmodule WideWeb.Router do
   alias WideWeb.{InterfaceSet, Map, Dijkstra, History}
 
-  @broadcast_interval 5_000
+  @broadcast_interval 3_000
   @default_ttl 20
 
   defmodule State do
